@@ -52,10 +52,10 @@ void CheckValue(String sentence, int valuesPosition)
       bothCoords.replaceAll("\\s+", "");
       int indexOfComma = bothCoords.indexOf(',');
       
-      coords[i].x = bothCoords.substring(0, indexOfComma);
-      coords[i].y = bothCoords.substring(indexOfComma);
+      coords[valuesPosition].x = bothCoords.substring(0, indexOfComma);
+      coords[valuesPosition].y = bothCoords.substring(indexOfComma);
       
-      PrintCoordinates(coords[i]);
+      PrintCoordinates(coords[valuesPosition]);
     }
   }
 }
