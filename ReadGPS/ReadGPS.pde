@@ -1,8 +1,11 @@
 import processing.serial.*;
 
+// Declare port variable in order to locate active port
 Serial myPort;
-String val;
+
+// Array of string values used to hold all of the NMEA sentences from gps serial output, for coordinates
 String[] values;
+
 //int[][] coordinates;
 int counter;
 boolean readFinished = false;
@@ -12,13 +15,15 @@ Coordinate[] coords;
 static int maxNumOfCoordinates = 100;
 static String coordinateLocation = "Location (in degrees, works with Google Maps): ";
 
+static int portNumber = 2;
+
 void setup()
 {
   size(800,600);
   counter = 0;
   values = new String[maxNumOfCoordinates];
   coords = new Coordinate[maxNumOfCoordinates];
-  String portName = Serial.list()[1];
+  String portName = Serial.list()[portNumber];
   myPort = new Serial(this, portName, 115200);
 }
 
@@ -48,12 +53,15 @@ void CheckValue(String sentence, int valuesPosition)
   {
     if (myString[i].contains(coordinateLocation))
     {
-      String bothCoords = myString[i].replaceAll(coordinateLocation, ""); 
-      bothCoords.replaceAll("\\s+", "");
+      String bothCoords = myString[i].substring(coordinateLocation.length() - 1); 
+      //println(bothCoords);
+      bothCoords = bothCoords.replaceAll(" ", "");
       int indexOfComma = bothCoords.indexOf(',');
       
+      coords[valuesPosition] = new Coordinate();
+      
       coords[valuesPosition].x = bothCoords.substring(0, indexOfComma);
-      coords[valuesPosition].y = bothCoords.substring(indexOfComma);
+      coords[valuesPosition].y = bothCoords.substring(indexOfComma + 1);
       
       PrintCoordinates(coords[valuesPosition]);
     }
