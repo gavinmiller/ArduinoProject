@@ -46,7 +46,7 @@ void CheckValue(String sentence, int valuesPosition)
   myString = sentence.split("\n");
   for (int i = 0; i < myString.length; i++)
   {
-    if (myString[i] == coordinateLocation)
+    if (myString[i].contains(coordinateLocation))
     {
       String bothCoords = myString[i].replaceAll(coordinateLocation, ""); 
       bothCoords.replaceAll("\\s+", "");
