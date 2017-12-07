@@ -1,85 +1,47 @@
-// Test code for Adafruit GPS modules using MTK3329/MTK3339 driver
-//
-// This code shows how to listen to the GPS module in an interrupt
-// which allows the program to have more 'freedom' - just parse
-// when a new NMEA sentence is available! Then access data when
-// desired.
-//
-// Tested and works great with the Adafruit Ultimate GPS module
-// using MTK33x9 chipset
-//    ------> http://www.adafruit.com/products/746
-// Pick one up today at the Adafruit electronics shop 
-// and help support open source hardware & software! -ada
+// Disclaimer!! Main bulk of code from Adafruit gps library.
+// Most comments are ours though.
 
+// Importing the Adafruit GPS libraries
 #include <Adafruit_GPS.h>
 #include <SoftwareSerial.h>
 
-// If you're using a GPS module:
-// Connect the GPS Power pin to 5V
-// Connect the GPS Ground pin to ground
-// If using software serial (sketch example default):
-//   Connect the GPS TX (transmit) pin to Digital 3
-//   Connect the GPS RX (receive) pin to Digital 2
-// If using hardware serial (e.g. Arduino Mega):
-//   Connect the GPS TX (transmit) pin to Arduino RX1, RX2 or RX3
-//   Connect the GPS RX (receive) pin to matching TX1, TX2 or TX3
-
-// If you're using the Adafruit GPS shield, change 
-// SoftwareSerial mySerial(3, 2); -> SoftwareSerial mySerial(8, 7);
-// and make sure the switch is set to SoftSerial
-
-// If using software serial, keep this line enabled
-// (you can change the pin numbers to match your wiring):
+// Opening the connections on the Arduino
 SoftwareSerial mySerial(3, 2);
-
-// If using hardware serial (e.g. Arduino Mega), comment out the
-// above SoftwareSerial line, and enable this line instead
-// (you can change the Serial number to match your wiring):
-
-//HardwareSerial mySerial = Serial1;
-
-
 Adafruit_GPS GPS(&mySerial);
 
-
-// Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
-// Set to 'true' if you want to debug and listen to the raw GPS sentences. 
+// Activating the debugger/serial monitor in order to monitor the coordinates and data received from the gps
 #define GPSECHO  true
 
-// this keeps track of whether we're using the interrupt
+// This keeps track of whether we're using the interrupt
 // off by default!
 boolean usingInterrupt = false;
-void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
+void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy // (Me) Probably not necessary in this version of Arduino but will leave on for safekeeping...
 
+// Run once on startup
 void setup()  
 {
     
-  // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
-  // also spit it out
+  // Connect at 115200 (baud rate) so we can read the GPS fast enough and echo without dropping characters
   Serial.begin(115200);
   Serial.println("Adafruit GPS library basic test!");
 
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
   GPS.begin(9600);
   
-  // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
+  // Next line turns on RMC (recommended minimum) and GGA (fix data) including altitude // May switch to minimum recommended
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  // uncomment this line to turn on only the "minimum recommended" data
-  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
-  // For parsing data, we don't suggest using anything but either RMC only or RMC+GGA since
-  // the parser doesn't care about other sentences at this time
   
-  // Set the update rate
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
-  // For the parsing code to work nicely and have time to sort thru the data, and
-  // print it out we don't suggest using anything higher than 1 Hz
+  // uncomment next line to restrict to the "minimum recommended" data
+  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
+  
+  // Set the update rate to 1HZ (1 update per second)
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   
 
-  // Request updates on antenna status, comment out to keep quiet
+  // Request updates on antenna status, comment out to keep quiet, but will be left on now to figure out when the antenna comes online
   GPS.sendCommand(PGCMD_ANTENNA);
 
-  // the nice thing about this code is you can have a timer0 interrupt go off
-  // every 1 millisecond, and read data from the GPS for you. that makes the
-  // loop code a heck of a lot easier!
+  // Activate the 'timer0' interrupt to check for data and store it in order to not clutter up loop and make sure the rest of the  
+  // code runs whilst the loop function is running! Called once a millisecond as stated below.
   useInterrupt(true);
 
   delay(1000);
@@ -91,12 +53,17 @@ void setup()
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
 SIGNAL(TIMER0_COMPA_vect) {
   char c = GPS.read();
-  // if you want to debug, this is a good time to do it!
+
 #ifdef UDR0
   if (GPSECHO)
-    if (c) UDR0 = c;  
+  {
+    if (c)
+    {
+      UDR0 = c;  
+    }
     // writing direct to UDR0 is much much faster than Serial.print 
     // but only one character can be written at a time. 
+  }
 #endif
 }
 
@@ -115,19 +82,27 @@ void useInterrupt(boolean v) {
 }
 
 uint32_t timer = millis();
-void loop()                     // run over and over again
+
+// One iteration every frame
+void loop()
 {
-  // in case you are not using the interrupt above, you'll
-  // need to 'hand query' the GPS, not suggested :(
+  // If interrupt is disabled, this conditional will handle dealing with the queries by hand.
   if (! usingInterrupt) {
     // read data from the GPS in the 'main loop'
     char c = GPS.read();
-    // if you want to debug, this is a good time to do it!
+
+    // Checks to see if debugging/printing to serial monitor is activated, if so print data character by character. (If there is a 
+    // character to be printed)
     if (GPSECHO)
-      if (c) Serial.print(c);
+      if (c) 
+      {
+        {
+          Serial.print(c);
+        }
+      }
   }
   
-  // if a sentence is received, we can check the checksum, parse it...
+  // if a sentence(GPS data) is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
     // a tricky thing here is if we print the NMEA sentence, or data
     // we end up not listening and catching other sentences! 
@@ -139,10 +114,14 @@ void loop()                     // run over and over again
   }
 
   // if millis() or timer wraps around, we'll just reset it
-  if (timer > millis())  timer = millis();
+  if (timer > millis())
+  {
+    timer = millis();
+  }
 
   // approximately every 2 seconds or so, print out the current stats
-  if (millis() - timer > 2000) { 
+  if (millis() - timer > 2000) 
+  { 
     timer = millis(); // reset the timer
     
     Serial.print("\nTime: ");
@@ -156,14 +135,23 @@ void loop()                     // run over and over again
     Serial.println(GPS.year, DEC);
     Serial.print("Fix: "); Serial.print((int)GPS.fix);
     Serial.print(" quality: "); Serial.println((int)GPS.fixquality); 
-    if (GPS.fix) {
+    if (GPS.fix) 
+    {
+      // The issue was whether or not to use latitude and longitude as is or convert to degrees, we decided to use the degrees version
+      // below.
       Serial.print("Location: ");
       Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);
       Serial.print(", "); 
       Serial.print(GPS.longitude, 4); Serial.println(GPS.lon);
-      Serial.print("Location (in degrees, works with Google Maps): ");
+      
+      // Could implement use of control characters here as well to make finding specific coordinates for Google Maps easier,
+      // but I like to complicate things. However, in Processing, I added a static string called 'coordinateLocation'.
+      // If implementing a control character instead is completely necessary, you can just change what's in that string to what is
+      // replaced with here. Program should continue to work fine.
+      Serial.print("Location (in degrees, works with Google Maps): "); 
+      
       Serial.print(GPS.latitudeDegrees, 4);
-      Serial.print(", "); 
+      Serial.print(", "); // Could remove space to make things easier in Processing....
       Serial.println(GPS.longitudeDegrees, 4);
       
       Serial.print("Speed (knots): "); Serial.println(GPS.speed);
@@ -172,6 +160,6 @@ void loop()                     // run over and over again
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
     }
 
-    Serial.println("#");
+    Serial.println("#"); // Control character to show end of data, for processing to communicate and grab coordinates
   }
 }
