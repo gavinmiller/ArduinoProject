@@ -84,10 +84,19 @@ void setup()
 
   delay(500);
   Serial.print("\nSTARTING LOGGING....");
-  if (GPS.LOCUS_StartLogger())
-    Serial.println(" STARTED!");
-  else
-    Serial.println(" no response :(");
+  boolean logStarted;
+  do {
+    if (GPS.LOCUS_StartLogger())
+    {
+      Serial.println(" STARTED!");
+      logStarted = true;
+    }
+    else
+    {
+      Serial.println(" no response :(");
+      logStarted = false;
+    }
+  } while(logStarted == false);
 
   delay(1000);
   // Ask for firmware version
