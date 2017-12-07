@@ -15,7 +15,8 @@ Adafruit_GPS GPS(&mySerial);
 // This keeps track of whether we're using the interrupt
 // off by default!
 boolean usingInterrupt = false;
-void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy // (Me) Probably not necessary in this version of Arduino but will leave on for safekeeping...
+void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy // (Me) Probably not necessary in this version of Arduino but 
+                                                                       // will leave on for safekeeping...
 
 // Run once on startup
 void setup()  
@@ -160,6 +161,7 @@ void loop()
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
     }
 
-    Serial.println("#"); // Control character to show end of data, for processing to communicate and grab coordinates
+    Serial.println("#"); // Control character to show end of data, for processing to communicate and grab coordinates, can be changed
+                         // but make sure to change static char in my processing file...
   }
 }
