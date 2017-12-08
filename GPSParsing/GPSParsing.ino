@@ -21,7 +21,9 @@ void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy // (Me) P
 // Run once on startup
 void setup()  
 {
-    
+  pinMode(8, OUTPUT);
+  pinMode(9,OUTPUT);
+  
   // Connect at 115200 (baud rate) so we can read the GPS fast enough and echo without dropping characters
   Serial.begin(115200);
   Serial.println("Adafruit GPS library basic test!");
@@ -105,6 +107,7 @@ void loop()
   
   // if a sentence(GPS data) is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
+    ChangeLED(true);
     // a tricky thing here is if we print the NMEA sentence, or data
     // we end up not listening and catching other sentences! 
     // so be very wary if using OUTPUT_ALLDATA and trying to print out data
@@ -112,6 +115,9 @@ void loop()
   
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
       return;  // we can fail to parse a sentence in which case we should just wait for another
+  }
+  else {
+    ChangeLED(false);
   }
 
   // if millis() or timer wraps around, we'll just reset it
@@ -163,5 +169,16 @@ void loop()
 
     Serial.println("#"); // Control character to show end of data, for processing to communicate and grab coordinates, can be changed
                          // but make sure to change static char in my processing file...
+  }
+}
+
+void ChangeLED(boolean hasAFix){
+    if (hasAFix == true) {
+    digitalWrite(9,LOW);
+    digitalWrite(8,HIGH);
+  }
+  else {
+    digitalWrite(8,LOW);
+    digitalWrite(9,HIGH);
   }
 }
