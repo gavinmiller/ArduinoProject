@@ -17,6 +17,7 @@ Adafruit_GPS GPS(&mySerial);
 boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy // (Me) Probably not necessary in this version of Arduino but 
                                                                        // will leave on for safekeeping...
+int previousTime = 0;
 
 // Run once on startup
 void setup()  
@@ -55,7 +56,8 @@ void setup()
 
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
 SIGNAL(TIMER0_COMPA_vect) {
-  char c = GPS.read();
+  char c;
+  c = GPS.read();
 
 #ifdef UDR0
   if (GPSECHO)
@@ -107,7 +109,6 @@ void loop()
   
   // if a sentence(GPS data) is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
-    ChangeLED(true);
     // a tricky thing here is if we print the NMEA sentence, or data
     // we end up not listening and catching other sentences! 
     // so be very wary if using OUTPUT_ALLDATA and trying to print out data
@@ -116,15 +117,13 @@ void loop()
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
       return;  // we can fail to parse a sentence in which case we should just wait for another
   }
-  else {
-    ChangeLED(false);
-  }
 
   // if millis() or timer wraps around, we'll just reset it
   if (timer > millis())
   {
     timer = millis();
   }
+
 
   // approximately every 2 seconds or so, print out the current stats
   if (millis() - timer > 2000) 
@@ -142,6 +141,18 @@ void loop()
     Serial.println(GPS.year, DEC);
     Serial.print("Fix: "); Serial.print((int)GPS.fix);
     Serial.print(" quality: "); Serial.println((int)GPS.fixquality); 
+    //bool test = false;
+    //do {
+      if (GPS.fix > 0){
+        ChangeLED(true);
+      }
+      else {
+        ChangeLED(false);
+      }
+
+      if (previousTime == GPS.seconds){
+        ChangeLED(false);
+      }
     if (GPS.fix) 
     {
       // The issue was whether or not to use latitude and longitude as is or convert to degrees, we decided to use the degrees version
@@ -165,8 +176,10 @@ void loop()
       Serial.print("Angle: "); Serial.println(GPS.angle);
       Serial.print("Altitude: "); Serial.println(GPS.altitude);
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
+      //test = true;
     }
-
+    //} while(!test);
+    previousTime = GPS.seconds;
     Serial.println("#"); // Control character to show end of data, for processing to communicate and grab coordinates, can be changed
                          // but make sure to change static char in my processing file...
   }
