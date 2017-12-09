@@ -16,6 +16,10 @@ static int baudRate = 115200;
 // To be changed only if you change the final/control character in the Arduino script
 static char controlChar = '#';
 
+PImage img;
+//URL for the static map
+String startURL = "https://maps.googleapis.com/maps/api/staticmap?&zoom=14&size=1000x1000&maptype=roadmap&markers=color:red%7Clabel:M";
+
 // Declare port variable in order to locate active port in Setup method
 Serial myPort;
 
@@ -26,9 +30,6 @@ String[] values;
 //float[][] coordinates; // Debating whether or not to use a multidimensional array or make a class. Decided to make a 
                          // Coordinate class, as seen at bottom.
 int counter;
-
-// TBC - True or false value to indicate back to arduino that gps is done collecting values.
-boolean readFinished = false;
 
 // Array of custom class Coordinate, to store all our lovely GPS points.
 Coordinate[] coords;
@@ -66,9 +67,11 @@ void draw()
   }
   else if (counter >= values.length) // Activated once the counter hits/exceeds the limits of the arrays, and return true for
   {                                  // arduino script to initiate stop method for the gps.
-    readFinished = true;
+    img = loadImage(CreateURL(coords), "jpg");
+    image(img,0,0,width,height);
   }
 }
+
 
 // Pass in the NMEA sentence, and the position it is at for setting the position in the coords array.
 // Position is not totally necessary, but may be good for cross referencing arrays later if need be.
@@ -103,6 +106,18 @@ void PrintCoordinates(Coordinate coordinates, int pos)
   println("X coordinate: " + coordinates.x);
   println("Y coordinate: " + coordinates.y); // Self explanatory, prints the coordinates on separate lines in the console.
   println();
+}
+
+String CreateURL(Coordinate[] coords){
+  String newURL = startURL;
+  //For loop to add all the maps markers
+  for (int i = 0; i < coords.length; i++){
+    newURL += "%7C" + coords[i].x + "," + coords[i].y;
+  }
+  //Development Key that allows the map API to be edited
+  newURL += "&key=AIzaSyCCLkMPWOC_ZHb86cojflgHfTATlTIxu_s";
+  //Returning the completed URL
+  return newURL;
 }
 
 public class Coordinate // Coordinate class declaration, only stores two values.
