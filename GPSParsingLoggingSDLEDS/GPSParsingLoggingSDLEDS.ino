@@ -1,4 +1,8 @@
-// Initiates GPS tracking and logs to SD card.
+/*
+
+GPSParsingLoggingSDLEDS - a condensed name for all the features this file provides. Initiates GPS tracking and logs to the SD card.
+
+*/
 
 // Importing the Adafruit GPS libraries
 #include <Adafruit_GPS.h>
