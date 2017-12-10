@@ -8,7 +8,11 @@ remember to transfer the text file to the same folder holding this program.
 
 //URL for the static map
 static String startURL = 
-"https://maps.googleapis.com/maps/api/staticmap?&zoom=14&size=1000x1000&maptype=roadmap&markers=color:red%7Clabel:M";
+"https://maps.googleapis.com/maps/api/staticmap?&size=1000x1000&maptype=roadmap&markers=color:red%7Clabel:M";
+
+static final String latitude = "Latitude:";
+static final String longitude = "Longitude:";
+static final String altitude = "Altitude:";
 
 // Array of custom class Coordinate, to store all our lovely GPS points.
 Coordinate[] coords;
@@ -19,18 +23,81 @@ PImage img;
 // Used as to not create the map before all of the points have been read.
 boolean readyToMap = false;
 
+String[] lines;
+
 void setup()
 {
   size(1000, 1000);
+  lines = loadStrings("GPSData.txt");
+  printArray(lines);
+  coords = new Coordinate[FindLengthOfCoords()];
+  FindCoordinates();
+  PrintCoordinates();
 }
 
 void draw()
 {
   if (readyToMap)
   {
-  img = loadImage(CreateURL(coords), "jpg"); // Passing in the string method CreateURL as a parameter, with the
-                                             // coordinates array we just created             
-  image(img,0,0,width,height);
+    img = loadImage(CreateURL(coords), "jpg"); // Passing in the string method CreateURL as a parameter, with the
+                                               // coordinates array we just created             
+    image(img,0,0,width,height);
+  }
+}
+
+int FindLengthOfCoords()
+{
+  int counter = 0;
+  for (int i = 0; i < lines.length; i++)
+  {
+    if (lines[i] != null)
+    {
+      counter++;
+    }
+  }
+  
+  return counter / 3;
+}
+
+void FindCoordinates()
+{
+  int lineNum = 0;
+  for (int i = 0; i < coords.length; i++)
+  {
+    coords[i] = new Coordinate();
+    for (int y = 0; y < 3; y++)
+    {
+      if (lineNum < lines.length)
+      {
+        //println(lineNum + lines[lineNum]);
+        if (lines[lineNum].contains(latitude))
+        {
+          coords[i].x = lines[lineNum].substring(latitude.length());
+        }
+        else if (lines[lineNum].contains(longitude))
+        {
+          coords[i].y = lines[lineNum].substring(longitude.length());
+        }
+        else //if (lines[lineNum].contains(latitude))
+        {
+         coords[i].alt = lines[lineNum].substring(altitude.length());
+        }
+      }
+      lineNum++;
+     }
+   }
+  
+  readyToMap = true;
+}
+
+void PrintCoordinates()
+{
+  for (int i = 0; i < coords.length; i++)
+  {
+    println(coords[i].x);
+    println(coords[i].y);
+    println(coords[i].alt);
+    println();
   }
 }
 
@@ -63,6 +130,7 @@ public class Coordinate // Coordinate class declaration, only stores two values.
   // calculations necessary. (AS OF NOW anyway)
   public String x;
   public String y;
+  public String alt;
   
   public Coordinate() // Empty constructor to set values individually.
   {
@@ -73,5 +141,12 @@ public class Coordinate // Coordinate class declaration, only stores two values.
   {                                               // hardcoded variables for debugging anyway
     x = xCoord;
     y = yCoord;
+  }
+  
+    public Coordinate(String xCoord, String yCoord, String altit)
+  {                                               
+    x = xCoord;
+    y = yCoord;
+    alt = altit;
   }
 }

@@ -38,20 +38,19 @@ import processing.serial.*;
 // Decided to confine static variables to top.
 // This variable declares the number of coordinates to store. Could store many more, but would take much longer.
 // New default value of 25.
-static int maxNumOfCoordinates = 25;
+static int maxNumOfCoordinates = 2;
 // As mentioned in the Arduino code for the gps, change this value in order to find a different control character/string
 // prior to x and y coordinates in degrees.
 static String coordinateLocation = "Location (in degrees, works with Google Maps): ";
 
 // CHANGE THIS DEPENDING ON WHICH PORT YOUR ARDUINO/GPS IS PLUGGED INTO
-static int portNumber = 2;
+static int portNumber = 0;
 // CHANGE THIS DEPENDING ON BAUD RATE DEFINED IN ARDUINO SCRIPT  
 static int baudRate = 115200;
 // To be changed only if you change the final/control character in the Arduino script
 static char controlChar = '#';
 //URL for the static map
-static String startURL = 
-"https://maps.googleapis.com/maps/api/staticmap?&zoom=14&size=1000x1000&maptype=roadmap&markers=color:red%7Clabel:M";
+static String startURL = "https://maps.googleapis.com/maps/api/staticmap?&size=1000x1000&maptype=roadmap&markers=color:red%7Clabel:M";
 
 // Will create/load and hold the image of the Google static map to draw to the screen with all coordinates
 PImage img;
@@ -62,6 +61,7 @@ Serial myPort;
 // Array of string values used to hold all of the NMEA sentences from gps serial output, for coordinates
 String[] values;
 
+PrintWriter output;
 
 //float[][] coordinates; // Debating whether or not to use a multidimensional array or make a class. Decided to make a 
                          // Coordinate class, as seen at bottom.
@@ -73,6 +73,8 @@ Coordinate[] coords;
 void setup()
 {
   size(1000,1000); // Set the size of the window to hold the Google map later
+  
+  output = createWriter("GPSData.txt");
   //printArray(Serial.list()); // Uncomment this line to find value of each com port
   counter = 0; // Number of stored variables, counter for while loop
   values = new String[maxNumOfCoordinates]; // Initialise the values array with length as defined above.
@@ -91,11 +93,15 @@ void draw()
   }
   else if (counter >= values.length) // Activated once the counter hits/exceeds the limits of the arrays, then loads the map
   {
-    
+    WriteToFile();
     img = loadImage(CreateURL(coords), "jpg"); // Passing in the string method CreateURL as a parameter, with the
                                                // coordinates array we just created
-                                               
-    image(img,0,0,width,height);
+    //println( CreateURL(coords)  )    ;
+    //println(coords[0].x);
+    if (img != null)
+    {
+      image(img,0,0,width,height);
+    }
   }
 }
 
@@ -121,7 +127,7 @@ void AssignData()
 }
 
 
-// Pass in the NMEA sentence, and the position it is at for setting the position in the coords array.
+// Pass in the NMEA sentence, and the position it is at for setting tRuhe position in the coords array.
 // Position is not totally necessary, but may be good for cross referencing arrays later if need be.
 void CheckValue(String sentence, int valuesPosition)
 {
@@ -162,21 +168,39 @@ void PrintCoordinates(Coordinate coordinates, int pos)
   println();
 }
 
+
+
+void WriteToFile()
+{
+  for (int i = 0; i < coords.length; i++)
+  {
+    output.println("Latitude:" + coords[i].x);
+    output.println("Longitude:" + coords[i].y);
+    output.println("Altitude:" + "0.5");
+  }
+  
+  output.flush();
+  output.close();
+}
+
 // From our Coords_to_map file, a String method which will return the final product and tell Google Maps where to place all
 // of our lovely markers. There is so much more potential with the static Google maps api such as plotting a route with lines
 // and other custom markers which we could've done if only we had more time...
-String CreateURL(Coordinate[] coords)
+String CreateURL(Coordinate[] coordinates)
 { // Obviously we pass in our Coordinate array to map the coordinates
   String newURL = startURL; // New url string to add to later
   //For loop to add all the maps markers in order to have, theoretically, a differing number of coordinates and not break
   // the code.
-  for (int i = 0; i < coords.length; i++)
+  for (int i = 0; i < coordinates.length; i++)
   {
     
     // Must perform a final null check as to not break our code if the user decides to end the gps data collection prematurely
-    if (coords[i] != null)
+    if (coordinates[i].x != null && coordinates[i].y != null)
     {
-      newURL += "%7C" + coords[i].x + "," + coords[i].y;
+      if (!newURL.contains(coordinates[i].x + "," + coordinates[i].y))
+      {
+        newURL += "%7C" + coordinates[i].x + "," + coordinates[i].y;
+      }
     }
   }
   // Development Key that allows the map API to be edited

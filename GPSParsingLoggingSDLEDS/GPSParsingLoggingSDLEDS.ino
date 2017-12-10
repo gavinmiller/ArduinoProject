@@ -1,6 +1,11 @@
 /*
 
 GPSParsingLoggingSDLEDS - a condensed name for all the features this file provides. Initiates GPS tracking and logs to the SD card.
+When finished, this file outputs two data files, in the format .txt. Using the GPSData.txt file we can output the coordinates to a 
+static Google map, using our 'SDDataToMap' Processing file.
+
+This file can be uploaded to the Arduino in order to make it standalone, for walks, drives etc, then when near a computer, you can
+transfer the files saved onto the micro sd to the processing file for displaying your journey.
 
 */
 
@@ -38,34 +43,6 @@ void setup()
 {
   pinMode(8, OUTPUT);
   pinMode(9,OUTPUT);
-  
-  // Connect at 115200 (baud rate) so we can read the GPS fast enough and echo without dropping characters
-  //Serial.begin(115200);
-  //Serial.println("Adafruit GPS library basic test!");
-
-  // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
-  //GPS.begin(9600);
-  
-  // Next line turns on RMC (recommended minimum) and GGA (fix data) including altitude // May switch to minimum recommended
-  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  
-  // uncomment next line to restrict to the "minimum recommended" data
-  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
-  
-  // Set the update rate to 1HZ (1 update per second)
-  //GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   
-
-  // Request updates on antenna status, comment out to keep quiet, but will be left on now to figure out when the antenna comes online
-  //GPS.sendCommand(PGCMD_ANTENNA);
-
-  // Activate the 'timer0' interrupt to check for data and store it in order to not clutter up loop and make sure the rest of the  
-  // code runs whilst the loop function is running! Called once a millisecond as stated below.
-  //useInterrupt(true);
-
-  //delay(1000);
-  // Ask for firmware version
-  //ySerial.println(PMTK_Q_RELEASE);
-
     
   Serial.begin(115200); //Turn on serial monitor
   Serial.println("HERE WE GO!");
@@ -130,8 +107,8 @@ void loop()
     mySensorData = SD.open("GPSData.txt", FILE_WRITE);
     Serial.print("Location: ");
     Serial.print("Fix: "); Serial.print((int)GPS.fix);
-    Serial.println(" quality: "); Serial.println((int)GPS.fixquality);
-    Serial.print("");
+    Serial.print(" quality: "); Serial.println((int)GPS.fixquality);
+    Serial.print(",");
     Serial.print(GPS.hour, DEC); Serial.print(':');
     Serial.print(GPS.minute, DEC); Serial.print(':');
     Serial.print(GPS.seconds, DEC); Serial.print('.');
@@ -144,12 +121,15 @@ void loop()
     //Serial.print((int)GPS.lon);
     Serial.print(",");
     Serial.print(GPS.altitude);
-    mySensorData.print(GPS.latitudeDegrees,4); //Write measured latitude to file
+    mySensorData.print("Latitude:");
+    mySensorData.println(GPS.latitudeDegrees,4); //Write measured latitude to file
     //mySensorData.print(GPS.lat); //Which hemisphere N or S
-    mySensorData.print(",");
-    mySensorData.print(GPS.longitudeDegrees,4); //Write measured longitude to file
+
+    mySensorData.print("Longitude:");
+    mySensorData.println(GPS.longitudeDegrees,4); //Write measured longitude to file
     //mySensorData.print(GPS.lon); //Which Hemisphere E or W
-    mySensorData.print(",");
+    
+    mySensorData.print("Altitude:");
     mySensorData.println(GPS.altitude);
     mySensorData.close();
   }
