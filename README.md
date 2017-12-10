@@ -1,11 +1,7 @@
 # ArduinoProject
 ArduinoProject
 
-Processing file reads from modified Adafruit library project 'parsing'.
-
-'ReadGPS' is the Processing file, and 'GPSParsing' is the Arduino file.
-
-The ParseAndLog file is currently outdated.
+The main four files are the 'GPSParsing' file, the GPSParsingLoggingSDLEDS, ReadGPS and SDDataToMap. Two Arduino files and two Processing files. If the Arduino is to stay connected to the computer, the GPSParsing program paired with the ReadGPS program will log the coordinates as they come through, then display the map afterwards. However, for on the go, you can attach a micro SD card to the Arduino and upload the GPSParsingLoggingSDLEDS in order to save the data to a text file. Then move the GPSData.txt file to the folder containing the SDDataToMap program and you will be able to display the journey you took via Processing.
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
